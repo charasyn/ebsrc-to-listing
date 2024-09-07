@@ -9,7 +9,7 @@ cppc := g++
 target := ebsrc-to-listing
 cpp_sources := $(wildcard src/*.cpp)
 
-cppflags := -O2 -std=c++17 -Wall -Wextra -Werror -pedantic
+cppflags := -O2 -std=c++20 -Wall -Wextra -Werror -pedantic -DNOT_VSCODE=1
 linkflags := 
 
 ###############################################################################
