@@ -8,12 +8,6 @@
 #include "exceptions.hpp"
 #include "matcher.hpp"
 
-#if !NOT_VSCODE
-#define not !
-#define and &&
-#define or ||
-#endif
-
 // We don't care about printing out the listings for these files.
 static const std::regex forbiddenIncludes{
     "(?:"
@@ -34,7 +28,9 @@ static const std::regex includeBodyRe{
     R"/(\.INCLUDE "([^"]+)")/"
 };
 
-
+static const std::regex bankLineRe{
+    R"/(Current file: .*/bank([0-9a-fA-F]{2})\.asm)/"
+};
 
 class ListingLine {
     using CodeBytes = std::vector<std::optional<uint8_t>>;
@@ -75,33 +71,59 @@ public:
         return ListingLine(codeAddress, std::move(codeBytes), std::move(bodyText));
     }
     std::string toString() const {
-        return std::format("{:06x}: {} {} {} {} {}",
+        return std::format("{:06X}: {} {} {} {} {} {}",
             codeAddress_,
-            codeBytes_.size() > 0 ? (codeBytes_[0].has_value() ? std::format("{:02x}", codeBytes_[0].value()) : "??" ) : "  ",
-            codeBytes_.size() > 1 ? (codeBytes_[1].has_value() ? std::format("{:02x}", codeBytes_[1].value()) : "??" ) : "  ",
-            codeBytes_.size() > 2 ? (codeBytes_[2].has_value() ? std::format("{:02x}", codeBytes_[2].value()) : "??" ) : "  ",
-            codeBytes_.size() > 3 ? (codeBytes_[3].has_value() ? std::format("{:02x}", codeBytes_[3].value()) : "??" ) : "  ",
+            codeBytes_.size() > 0 ? (codeBytes_[0].has_value() ? std::format("{:02X}", codeBytes_[0].value()) : "??" ) : "  ",
+            codeBytes_.size() > 1 ? (codeBytes_[1].has_value() ? std::format("{:02X}", codeBytes_[1].value()) : "??" ) : "  ",
+            codeBytes_.size() > 2 ? (codeBytes_[2].has_value() ? std::format("{:02X}", codeBytes_[2].value()) : "??" ) : "  ",
+            codeBytes_.size() > 3 ? (codeBytes_[3].has_value() ? std::format("{:02X}", codeBytes_[3].value()) : "??" ) : "  ",
+            codeBytes_.size() > 4 ? "..." : "   ",
             bodyText_
         );
+    }
+    void updateRelocations(const EbRom & rom) {
+        for (std::size_t offset = 0; offset < codeBytes_.size(); offset += 1) {
+            if (codeBytes_[offset].has_value()) {
+                continue;
+            }
+            uint32_t effectiveAddress = codeAddress_ + offset;
+            uint8_t data = rom.readSnesAddr(effectiveAddress);
+            codeBytes_[offset] = data;
+        }
     }
 };
 
 class ListingMatcher : public IListingMatcher {
+    static constexpr int NO_BANK = -1;
     template <typename T>
     static inline bool _shouldOutputIncludedFile(T includedFilename) {
         // We should output the file if it doesn't match one of the forbidden
         // includes.
         return not std::regex_match(includedFilename, forbiddenIncludes);
     }
+    template <typename T>
+    static inline int _getBankFromLine(T curLineStr) {
+        std::smatch m;
+        if (not std::regex_match(curLineStr, m, bankLineRe)) {
+            return NO_BANK;
+        }
+        return std::stoi(m.str(1), nullptr, 16) + 0xC0;
+    }
 public:
-    virtual void processListing(uint8_t bank, std::istream & listing){
+    virtual void processListing(std::istream & listing){
         std::optional<ListingLine> lastLine{};
         std::optional<ListingLine> curLine{};
         std::string curLineStr{};
         std::string curFile{};
+        int bank = NO_BANK;
         while (listing.good()) {
             if (not std::getline(listing, curLineStr)) {
                 throw malformed_listing("Can't getline");
+            }
+            if (bank == NO_BANK) {
+                std::smatch bankMatch;
+                bank = _getBankFromLine(curLineStr);
+                continue;
             }
             curLine = ListingLine::fromString(bank, curLineStr);
             if (not curLine.has_value()) {
@@ -122,6 +144,7 @@ public:
                 continue;
             }
             // TODO: do stuff
+            curLine->updateRelocations(getRom());
             std::cout << std::format("{:60} | ", curFile) << curLine->toString() << std::endl;
         }
     }

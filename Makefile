@@ -8,8 +8,9 @@ cppc := g++
 
 target := ebsrc-to-listing
 cpp_sources := $(wildcard src/*.cpp)
+cpp_headers := $(wildcard src/*.hpp)
 
-cppflags := -O2 -std=c++20 -Wall -Wextra -Werror -pedantic -DNOT_VSCODE=1
+cppflags := -g -O2 -std=c++20 -Wall -Wextra -Werror -pedantic -DNOT_VSCODE=1
 linkflags := 
 
 ###############################################################################
@@ -24,7 +25,7 @@ objs := $(patsubst src/%.cpp,obj/%.o,$(cpp_sources))
 $(target): $(objs)
 	$(cppc) $(cppflags) $(linkflags) -o $@ $^
 
-obj/%.o: src/%.cpp | dir_obj
+obj/%.o: src/%.cpp $(cpp_headers) | dir_obj
 	$(cppc) $(cppflags) -c -o $@ $<
 
 .PHONY: dir_obj clean
