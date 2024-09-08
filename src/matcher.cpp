@@ -5,32 +5,19 @@
 #include <string>
 #include <vector>
 
+#include "bodysanitizer.hpp"
 #include "exceptions.hpp"
 #include "matcher.hpp"
+#include "regexes.hpp"
 
-// We don't care about printing out the listings for these files.
-static const std::regex forbiddenIncludes{
-    "(?:"
-    "structs|eventmacros|config|constants|enums|hardware|bin|common|"
-    "macros|textmacros|symbols"
-    ").*"
-};
-
-static const std::regex lineRe{
-    R"/(^([0-9A-F]{6}). \d+ +((?:[0-9A-F][0-9A-F] |rr |   ){4}) (.*)$)/"
-};
-
-static const std::regex byteOrRelocationRe{
-    R"/((rr)|([0-9A-F][0-9A-F]) )/"
-};
-
-static const std::regex includeBodyRe{
-    R"/(\.INCLUDE "([^"]+)")/"
-};
-
-static const std::regex bankLineRe{
-    R"/(Current file: .*/bank([0-9a-fA-F]{2})\.asm)/"
-};
+template <class T>
+inline std::optional<std::smatch> matchRegex(std::regex regex, T str) {
+    std::smatch ret;
+    if (std::regex_match(str, ret, regex)) {
+        return ret;
+    }
+    return {};
+}
 
 class ListingLine {
     using CodeBytes = std::vector<std::optional<uint8_t>>;
@@ -67,7 +54,7 @@ public:
             }
         }
         // Get bodyText
-        std::string bodyText = m.str(3);
+        std::string bodyText = sanitizeBody(m.str(3));
         return ListingLine(codeAddress, std::move(codeBytes), std::move(bodyText));
     }
     std::string toString() const {
@@ -90,6 +77,12 @@ public:
             uint8_t data = rom.readSnesAddr(effectiveAddress);
             codeBytes_[offset] = data;
         }
+    }
+    void extendBytes(const ListingLine & otherLine) {
+        codeBytes_.insert(codeBytes_.end(), otherLine.codeBytes_.begin(), otherLine.codeBytes_.end());
+    }
+    bool isEmpty() const {
+        return codeBytes_.size() == 0 and std::regex_match(bodyText_, whitespace);
     }
 };
 
@@ -118,7 +111,10 @@ public:
         int bank = NO_BANK;
         while (listing.good()) {
             if (not std::getline(listing, curLineStr)) {
-                throw malformed_listing("Can't getline");
+                break;
+            }
+            if (curLineStr.length() == 0) {
+                continue;
             }
             if (bank == NO_BANK) {
                 std::smatch bankMatch;
@@ -145,7 +141,19 @@ public:
             }
             // TODO: do stuff
             curLine->updateRelocations(getRom());
-            std::cout << std::format("{:60} | ", curFile) << curLine->toString() << std::endl;
+            if (curLine->bodyText().length() == 0 and curLine->codeBytes().size() > 0) {
+                // This line is just more bytes for the previous line.
+                if (not lastLine) {
+                    throw malformed_listing("Unexpectedly, there are bytes on a line without a "
+                                            "previous line to associate them with");
+                }
+                lastLine->extendBytes(*curLine);
+            } else {
+                if (lastLine and not lastLine->isEmpty()) {
+                    std::cout << std::format("{:60} | ", curFile) << lastLine->toString() << std::endl;
+                }
+                lastLine = curLine;
+            }
         }
     }
 };
