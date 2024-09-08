@@ -15,9 +15,9 @@ MapFileReader MapFileReader::fromIstream(std::istream & mapFile) {
             continue;
         }
         std::smatch m;
-        if (std::regex_match(curLineStr, m, mapFileSegmentHeaderRe)) {
+        if (std::regex_match(curLineStr, m, Re::mapFileSegmentHeader)) {
             inSegments = true;
-        } else if (inSegments and std::regex_match(curLineStr, m, mapFileSegmentLineRe)) {
+        } else if (inSegments and std::regex_match(curLineStr, m, Re::mapFileSegmentLine)) {
             uint32_t start = std::stoi(m.str(2), nullptr, 16);
             uint32_t end = std::stoi(m.str(3), nullptr, 16);
             ret.segments_.emplace(std::piecewise_construct,

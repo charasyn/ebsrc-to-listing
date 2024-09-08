@@ -27,6 +27,6 @@ public:
         codeBytes_.insert(codeBytes_.end(), otherLine.codeBytes_.begin(), otherLine.codeBytes_.end());
     }
     inline bool isEmpty() const {
-        return codeBytes_.size() == 0 and std::regex_match(bodyText_, whitespace);
+        return codeBytes_.size() == 0 and std::regex_match(bodyText_, Re::whitespace);
     }
 };

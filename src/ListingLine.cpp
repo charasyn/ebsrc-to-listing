@@ -7,7 +7,7 @@
 
 std::optional<ListingLine> ListingLine::fromString(uint32_t segmentStart, std::string line) {
     std::smatch m;
-    if (not std::regex_match(line, m, lineRe)) {
+    if (not std::regex_match(line, m, Re::listingLine)) {
         return {};
     }
     // Get codeAddress
@@ -18,7 +18,7 @@ std::optional<ListingLine> ListingLine::fromString(uint32_t segmentStart, std::s
     uint32_t codeAddress = offset + segmentStart;
     // Get codeBytes
     CodeBytes codeBytes{};
-    auto byteIt = std::sregex_iterator(m[2].first, m[2].second, byteOrRelocationRe);
+    auto byteIt = std::sregex_iterator(m[2].first, m[2].second, Re::byteOrRelocation);
     for (; byteIt != std::sregex_iterator(); ++byteIt) {
         if (byteIt->str(1).length()) {
             codeBytes.emplace_back();

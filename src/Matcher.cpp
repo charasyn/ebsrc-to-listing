@@ -16,7 +16,7 @@ class ListingMatcher : public IListingMatcher {
     static inline bool _shouldOutputIncludedFile(T includedFilename) {
         // We should output the file if it doesn't match one of the forbidden
         // includes.
-        return not std::regex_match(includedFilename, forbiddenIncludes);
+        return not std::regex_match(includedFilename, Re::forbiddenIncludes);
     }
     MapFileReader const & map_;
     IRenderer & renderer_;
@@ -46,7 +46,7 @@ public:
             {
                 // Check if this line is a segment stmt.
                 std::smatch segmentReMatch;
-                if (std::regex_match(curLine->bodyText(), segmentReMatch, segmentBodyRe)) {
+                if (std::regex_match(curLine->bodyText(), segmentReMatch, Re::segmentBody)) {
                     curSegment = &map_.getSegment(segmentReMatch.str(1));
                     continue;
                 }
@@ -54,7 +54,7 @@ public:
             {
                 // Check if this line is an include stmt.
                 std::smatch includeReMatch;
-                if (std::regex_match(curLine->bodyText(), includeReMatch, includeBodyRe)) {
+                if (std::regex_match(curLine->bodyText(), includeReMatch, Re::includeBody)) {
                     if (_shouldOutputIncludedFile(includeReMatch.str(1))) {
                         curFile = includeReMatch.str(1);
                         renderer_.changeFile(curFile);
