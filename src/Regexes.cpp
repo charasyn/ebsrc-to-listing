@@ -1,4 +1,4 @@
-#include "regexes.hpp"
+#include "Regexes.hpp"
 
 const std::regex whitespace{R"/(\s*$)/"};
 

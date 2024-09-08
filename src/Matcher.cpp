@@ -5,10 +5,10 @@
 #include <string>
 #include <vector>
 
-#include "bodysanitizer.hpp"
-#include "exceptions.hpp"
-#include "matcher.hpp"
-#include "regexes.hpp"
+#include "BodySanitizer.hpp"
+#include "Exceptions.hpp"
+#include "Matcher.hpp"
+#include "Regexes.hpp"
 
 template <class T>
 inline std::optional<std::smatch> matchRegex(std::regex regex, T str) {

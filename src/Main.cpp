@@ -3,11 +3,11 @@
 #include <array>
 #include <cstdint>
 
-#include "common.hpp"
-#include "exceptions.hpp"
-#include "matcher.hpp"
+#include "Common.hpp"
+#include "Exceptions.hpp"
+#include "Matcher.hpp"
 
-#include "sha256.hpp"
+#include "Sha256.hpp"
 
 constexpr static sha256_type cleanRomHash = {
     0xa8,0xfe,0x22,0x26,

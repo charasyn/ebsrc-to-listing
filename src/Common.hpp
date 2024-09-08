@@ -2,7 +2,7 @@
 #include <array>
 #include <cstdint>
 
-#include "exceptions.hpp"
+#include "Exceptions.hpp"
 
 #if !NOT_VSCODE
 #define not !
