@@ -6,6 +6,7 @@
 #include "Common.hpp"
 #include "Exceptions.hpp"
 #include "Matcher.hpp"
+#include "TextRenderer.hpp"
 
 #include "Sha256.hpp"
 
@@ -44,11 +45,12 @@ int main(int argc, char **argv) {
     using openmode = std::ios_base::openmode;
     std::ifstream romIstream{argv[1], openmode::_S_bin | openmode::_S_in};
     std::ifstream listingFileIstream{argv[2]};
+    TextRenderer renderer{};
     (void)romIstream;
     (void)listingFileIstream;
     try {
         initializeRom(theRom_, romIstream);
-        auto listingMatcher = createListingMatcher();
+        auto listingMatcher = createListingMatcher(&renderer);
         listingMatcher->processListing(listingFileIstream);
     } catch (const malformed_listing & e) {
         std::cerr << "ERROR: Malformed listing: " << e.what() << std::endl;
