@@ -11,40 +11,23 @@
 #include "Matcher.hpp"
 #include "Regexes.hpp"
 
-template <class T>
-inline std::optional<std::smatch> matchRegex(std::regex regex, T str) {
-    std::smatch ret;
-    if (std::regex_match(str, ret, regex)) {
-        return ret;
-    }
-    return {};
-}
-
 class ListingMatcher : public IListingMatcher {
-    static constexpr int NO_BANK = -1;
     template <typename T>
     static inline bool _shouldOutputIncludedFile(T includedFilename) {
         // We should output the file if it doesn't match one of the forbidden
         // includes.
         return not std::regex_match(includedFilename, forbiddenIncludes);
     }
-    template <typename T>
-    static inline int _getBankFromLine(T curLineStr) {
-        std::smatch m;
-        if (not std::regex_match(curLineStr, m, bankLineRe)) {
-            return NO_BANK;
-        }
-        return std::stoi(m.str(1), nullptr, 16) + 0xC0;
-    }
-    IRenderer * renderer_;
+    MapFileReader const & map_;
+    IRenderer & renderer_;
 public:
-    ListingMatcher(IRenderer * renderer) : renderer_(renderer) {}
+    ListingMatcher(MapFileReader const & map, IRenderer & renderer) : map_(map), renderer_(renderer) {}
     virtual void processListing(std::istream & listing){
         std::optional<ListingLine> lastLine{};
         std::optional<ListingLine> curLine{};
         std::string curLineStr{};
         std::string curFile{};
-        int bank = NO_BANK;
+        Segment const * curSegment = nullptr;
         while (listing.good()) {
             if (not std::getline(listing, curLineStr)) {
                 break;
@@ -52,28 +35,38 @@ public:
             if (curLineStr.length() == 0) {
                 continue;
             }
-            if (bank == NO_BANK) {
-                std::smatch bankMatch;
-                bank = _getBankFromLine(curLineStr);
-                continue;
-            }
-            curLine = ListingLine::fromString(bank, curLineStr);
+            // For cases where we have lines without a segment defined beforehand, we will just
+            // use an offset of zero.
+            curLine = ListingLine::fromString(curSegment ? curSegment->start : 0U, curLineStr);
             if (not curLine.has_value()) {
                 // Unknown line - not an error (the file starts with non-format lines).
                 // Keep going.
                 continue;
             }
-            // Check if this line is an include stmt.
-            std::smatch includeReMatch;
-            if (std::regex_match(curLine->bodyText(), includeReMatch, includeBodyRe)) {
-                if (_shouldOutputIncludedFile(includeReMatch.str(1))) {
-                    curFile = includeReMatch.str(1);
-                    renderer_->changeFile(curFile);
+            {
+                // Check if this line is a segment stmt.
+                std::smatch segmentReMatch;
+                if (std::regex_match(curLine->bodyText(), segmentReMatch, segmentBodyRe)) {
+                    curSegment = &map_.getSegment(segmentReMatch.str(1));
                     continue;
                 }
             }
-            // If we don't have a filename by this point, we don't care about this line.
-            if (curFile.empty()) {
+            {
+                // Check if this line is an include stmt.
+                std::smatch includeReMatch;
+                if (std::regex_match(curLine->bodyText(), includeReMatch, includeBodyRe)) {
+                    if (_shouldOutputIncludedFile(includeReMatch.str(1))) {
+                        curFile = includeReMatch.str(1);
+                        renderer_.changeFile(curFile);
+                        continue;
+                    }
+                }
+            }
+            // If we don't have a segment or filename by this point, we don't care about this line.
+            if (not curSegment or curFile.empty()) {
+                if (curLine->codeBytes().size() > 0) {
+                    throw malformed_listing("Bytes are defined outside of a file");
+                }
                 continue;
             }
             // TODO: do stuff
@@ -87,7 +80,7 @@ public:
                 lastLine->extendBytes(*curLine);
             } else {
                 if (lastLine and not lastLine->isEmpty()) {
-                    renderer_->consumeLine(*lastLine);
+                    renderer_.consumeLine(*lastLine);
                 }
                 lastLine = curLine;
             }
@@ -95,6 +88,6 @@ public:
     }
 };
 
-std::unique_ptr<IListingMatcher> createListingMatcher(IRenderer * renderer) {
-    return std::make_unique<ListingMatcher>(renderer);
+std::unique_ptr<IListingMatcher> createListingMatcher(MapFileReader const & map, IRenderer & renderer) {
+    return std::make_unique<ListingMatcher>(map, renderer);
 }

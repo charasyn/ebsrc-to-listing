@@ -6,6 +6,7 @@
 
 #include "Common.hpp"
 #include "IRenderer.hpp"
+#include "MapFileReader.hpp"
 
 class IListingMatcher {
 public:
@@ -13,4 +14,4 @@ public:
     virtual void processListing(std::istream & listing) = 0;
 };
 
-std::unique_ptr<IListingMatcher> createListingMatcher(IRenderer * renderer);
+std::unique_ptr<IListingMatcher> createListingMatcher(MapFileReader const & map, IRenderer & renderer);

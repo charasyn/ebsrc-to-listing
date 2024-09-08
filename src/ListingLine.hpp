@@ -20,7 +20,7 @@ public:
     inline const CodeBytes & codeBytes() const { return codeBytes_; }
     inline const std::string & bodyText() const { return bodyText_; }
     inline uint32_t codeAddress() const { return codeAddress_; }
-    static std::optional<ListingLine> fromString(uint8_t bank, std::string line);
+    static std::optional<ListingLine> fromString(uint32_t segmentStart, std::string line);
     std::string toString() const;
     void updateRelocations(const EbRom & rom);
     inline void extendBytes(const ListingLine & otherLine) {

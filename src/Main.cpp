@@ -1,12 +1,14 @@
-#include <iostream>
-#include <fstream>
-#include <array>
 #include <cstdint>
+#include <iostream>
+#include <filesystem>
+#include <fstream>
+namespace fs = std::filesystem;
 
 #include "Common.hpp"
 #include "Exceptions.hpp"
 #include "Matcher.hpp"
 #include "TextRenderer.hpp"
+#include "MapFileReader.hpp"
 
 #include "Sha256.hpp"
 
@@ -38,19 +40,20 @@ static void initializeRom(EbRom & rom, std::istream & romIstream) {
 }
 
 int main(int argc, char **argv) {
-    if (argc != 3) {
-        std::cerr << "USAGE: ebsrc-to-listing <ROM file (.sfc)> <Listing file (.lst)>" << std::endl;
+    if (argc != 2) {
+        std::cerr << "USAGE: ebsrc-to-listing <path to ebsrc/build directory>" << std::endl;
         return 1;
     }
+    fs::path fpBase{argv[1]};
     using openmode = std::ios_base::openmode;
-    std::ifstream romIstream{argv[1], openmode::_S_bin | openmode::_S_in};
-    std::ifstream listingFileIstream{argv[2]};
-    TextRenderer renderer{};
-    (void)romIstream;
-    (void)listingFileIstream;
+    std::ifstream romIstream{fpBase / "earthbound.sfc", openmode::_S_bin | openmode::_S_in};
+    std::ifstream mapFileIstream{fpBase / "earthbound.map"};
+    std::ifstream listingFileIstream{fpBase / "US" / "bank00.lst"};
     try {
         initializeRom(theRom_, romIstream);
-        auto listingMatcher = createListingMatcher(&renderer);
+        const auto map = MapFileReader::fromIstream(mapFileIstream);
+        TextRenderer renderer{};
+        auto listingMatcher = createListingMatcher(map, renderer);
         listingMatcher->processListing(listingFileIstream);
     } catch (const malformed_listing & e) {
         std::cerr << "ERROR: Malformed listing: " << e.what() << std::endl;

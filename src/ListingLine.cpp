@@ -5,7 +5,7 @@
 #include "Exceptions.hpp"
 #include "ListingLine.hpp"
 
-std::optional<ListingLine> ListingLine::fromString(uint8_t bank, std::string line) {
+std::optional<ListingLine> ListingLine::fromString(uint32_t segmentStart, std::string line) {
     std::smatch m;
     if (not std::regex_match(line, m, lineRe)) {
         return {};
@@ -15,7 +15,7 @@ std::optional<ListingLine> ListingLine::fromString(uint8_t bank, std::string lin
     if (offset < 0 or offset >= 65536) {
         throw malformed_listing("Line offset is out of range");
     }
-    uint32_t codeAddress = offset + (bank << 16);
+    uint32_t codeAddress = offset + segmentStart;
     // Get codeBytes
     CodeBytes codeBytes{};
     auto byteIt = std::sregex_iterator(m[2].first, m[2].second, byteOrRelocationRe);
