@@ -7,6 +7,5 @@
 class IRenderer {
 public:
     virtual ~IRenderer() {}
-    virtual void changeFile(std::string filename) = 0;
-    virtual void consumeLine(ListingLine const & line) = 0;
+    virtual void consumeLine(std::string const & filename, ListingLine const & line) = 0;
 };

@@ -6,12 +6,16 @@ const std::regex Re::whitespace{R"/(\s*$)/"};
 const std::regex Re::forbiddenIncludes{
     "(?:"
     "structs|eventmacros|config|constants|enums|hardware|bin|common|"
-    "macros|textmacros|symbols"
+    "macros|textmacros|symbols|text_data/.*\\.symbols"
     ").*"
 };
 
 const std::regex Re::listingLine{
-    R"/(^([0-9A-F]{6}). \d+ +((?:[0-9A-F][0-9A-F] |rr |   ){4}) (.*)$)/"
+    R"/(^([0-9A-F]{6}). (\d{1,2}) +((?:[0-9A-F][0-9A-F] |rr |   ){4}) (.*)$)/"
+};
+
+const std::regex Re::currentFileLine{
+    R"/(Current file: src/(\S+)$)/"
 };
 
 const std::regex Re::byteOrRelocation{
@@ -19,7 +23,7 @@ const std::regex Re::byteOrRelocation{
 };
 
 const std::regex Re::includeBody{
-    R"/(\.INCLUDE "([^"]+)")/"
+    R"/(\s*(\.INCLUDE|LOCALEINCLUDE) "([^"]+)")/"
 };
 
 const std::regex Re::segmentBody{

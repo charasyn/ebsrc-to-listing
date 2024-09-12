@@ -3,7 +3,10 @@
 #include "IRenderer.hpp"
 
 class TextRenderer : public IRenderer {
+    std::string lastFilename;
+    std::string lastFilenameOutputted;
+    bool shouldOutputFile;
+    void changeFile(std::string const & filename);
 public:
-    virtual void changeFile(std::string filename);
-    virtual void consumeLine(ListingLine const & line);
+    virtual void consumeLine(std::string const & filename, ListingLine const & line);
 };

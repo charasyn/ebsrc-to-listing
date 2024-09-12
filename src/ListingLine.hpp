@@ -9,20 +9,20 @@
 #include "Regexes.hpp"
 
 class ListingLine {
-    using CodeBytes = std::vector<std::optional<uint8_t>>;
+    using CodeBytes = std::vector<uint8_t>;
     CodeBytes codeBytes_;
     std::string bodyText_;
     uint32_t codeAddress_;
-    explicit inline ListingLine(uint32_t codeAddress, CodeBytes && codeBytes, std::string && bodyText)
-        : codeBytes_(std::move(codeBytes)), bodyText_(std::move(bodyText)), codeAddress_(codeAddress) {}
+    uint32_t includeDepth_;
+    explicit inline ListingLine(uint32_t codeAddress, int includeDepth, CodeBytes && codeBytes, std::string && bodyText)
+        : codeBytes_(std::move(codeBytes)), bodyText_(std::move(bodyText)), codeAddress_(codeAddress), includeDepth_(includeDepth) {}
  
 public:
     inline const CodeBytes & codeBytes() const { return codeBytes_; }
     inline const std::string & bodyText() const { return bodyText_; }
     inline uint32_t codeAddress() const { return codeAddress_; }
-    static std::optional<ListingLine> fromString(uint32_t segmentStart, std::string line);
-    std::string toString() const;
-    void updateRelocations(const EbRom & rom);
+    inline uint32_t includeDepth() const { return includeDepth_; }
+    static std::optional<ListingLine> fromString(EbRom const & rom, uint32_t segmentStart, std::string line);
     inline void extendBytes(const ListingLine & otherLine) {
         codeBytes_.insert(codeBytes_.end(), otherLine.codeBytes_.begin(), otherLine.codeBytes_.end());
     }
