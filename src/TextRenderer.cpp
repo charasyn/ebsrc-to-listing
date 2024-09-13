@@ -30,13 +30,21 @@ void TextRenderer::consumeLine(std::string const & filename, ListingLine const &
         lastFilenameOutputted = filename;
         changeFile(filename);
     }
-    outputStream << std::format("  {:06X}: {} {} {} {} {} {}",
+    outputStream << std::format("  {:06X}: {} {} {} {} {}",
         line.codeAddress(),
         line.codeBytes().size() > 0 ? std::format("{:02X}", line.codeBytes()[0]) : "  ",
         line.codeBytes().size() > 1 ? std::format("{:02X}", line.codeBytes()[1]) : "  ",
         line.codeBytes().size() > 2 ? std::format("{:02X}", line.codeBytes()[2]) : "  ",
         line.codeBytes().size() > 3 ? std::format("{:02X}", line.codeBytes()[3]) : "  ",
-        line.codeBytes().size() > 4 ? "..." : "   ",
         line.bodyText()
     ) << std::endl;
+    for (uint32_t i = 4; i < line.codeBytes().size(); i += 4) {
+    outputStream << std::format("          {} {} {} {} ",
+        line.codeBytes().size() > (i+0) ? std::format("{:02X}", line.codeBytes()[i+0]) : "  ",
+        line.codeBytes().size() > (i+1) ? std::format("{:02X}", line.codeBytes()[i+1]) : "  ",
+        line.codeBytes().size() > (i+2) ? std::format("{:02X}", line.codeBytes()[i+2]) : "  ",
+        line.codeBytes().size() > (i+3) ? std::format("{:02X}", line.codeBytes()[i+3]) : "  ",
+        line.bodyText()
+    ) << std::endl;
+    }
 }

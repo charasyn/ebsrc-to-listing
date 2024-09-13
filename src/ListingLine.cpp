@@ -12,7 +12,7 @@ std::optional<ListingLine> ListingLine::fromString(EbRom const & rom, uint32_t s
     }
     // Get codeAddress
     int offset = std::stoi(m[1], nullptr, 16);
-    if (offset < 0 or offset >= 65536) {
+    if (offset < 0 or offset > 65536) {
         throw malformed_listing("Line offset is out of range");
     }
     uint32_t codeAddress = offset + segmentStart;
