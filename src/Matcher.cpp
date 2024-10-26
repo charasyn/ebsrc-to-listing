@@ -29,6 +29,11 @@ public:
             if (nextLineStr.length() == 0) {
                 continue;
             }
+            // Limit line length to 400 characters, to avoid breaking things later.
+            if (nextLineStr.length() > 400) {
+                nextLineStr.resize(400);
+                nextLineStr += "<... long line trimmed>";
+            }
             if (includeStack.size() == 0) {
                 // Check if this line is the "Current file" line.
                 std::smatch currentFileReMatch;

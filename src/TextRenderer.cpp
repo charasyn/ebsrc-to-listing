@@ -16,6 +16,10 @@ void TextRenderer::changeFile(std::string const & filename){
 }
 
 void TextRenderer::consumeLine(std::string const & filename, ListingLine const & line){
+    if (lastCodeAddress != NO_PREVIOUS_ADDRESS and (line.codeAddress() - lastCodeAddress) > 12) {
+        outputStream << "          ...omitted..." << std::endl;
+    }
+    lastCodeAddress = NO_PREVIOUS_ADDRESS;
     if (line.isEmpty()) {
         return;
     }
@@ -46,5 +50,8 @@ void TextRenderer::consumeLine(std::string const & filename, ListingLine const &
         line.codeBytes().size() > (i+3) ? std::format("{:02X}", line.codeBytes()[i+3]) : "  ",
         line.bodyText()
     ) << std::endl;
+    }
+    if (line.codeBytes().size() == 12) {
+        lastCodeAddress = line.codeAddress();
     }
 }
