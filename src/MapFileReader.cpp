@@ -1,3 +1,6 @@
+// charasyn 2024
+// Public domain; see UNLICENSE.txt for more info
+
 #include "Common.hpp"
 #include "MapFileReader.hpp"
 #include "Regexes.hpp"

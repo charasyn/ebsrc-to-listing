@@ -1,5 +1,6 @@
 # ebsrc-to-listing makefile
 # charasyn 2024
+# Public domain; see UNLICENSE.txt for more info
 
 # C++ compiler to use.
 cppc := g++
