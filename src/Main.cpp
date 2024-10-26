@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <iostream>
 #include <filesystem>
+#include <format>
 #include <fstream>
 namespace fs = std::filesystem;
 
@@ -40,23 +41,30 @@ static void initializeRom(EbRom & rom, std::istream & romIstream) {
 }
 
 int main(int argc, char **argv) {
-    if (argc != 2) {
-        std::cerr << "USAGE: ebsrc-to-listing <path to ebsrc/build directory>" << std::endl;
+    if (argc != 3) {
+        std::cerr << "USAGE: ebsrc-to-listing <path to ebsrc/build directory> <path to output directory>" << std::endl;
         return 1;
     }
-    fs::path fpBase{argv[1]};
+    fs::path fpSource{argv[1]};
+    fs::path fpDest{argv[2]};
     using openmode = std::ios_base::openmode;
-    std::ifstream romIstream{fpBase / "earthbound.sfc", openmode::_S_bin | openmode::_S_in};
-    std::ifstream mapFileIstream{fpBase / "earthbound.map"};
-    std::ifstream listingFileIstream{fpBase / "US" / "bank00.lst"};
+    std::ifstream romIstream{fpSource / "earthbound.sfc", openmode::_S_bin | openmode::_S_in};
+    std::ifstream mapFileIstream{fpSource / "earthbound.map"};
+    std::string currentListing{"<none>"};
     try {
         initializeRom(theRom_, romIstream);
         const auto map = MapFileReader::fromIstream(mapFileIstream);
-        TextRenderer renderer{};
-        auto listingMatcher = createListingMatcher(map, renderer);
-        listingMatcher->processListing(listingFileIstream);
+        for (int bank = 0; bank < 0x30; bank += 1) {
+            currentListing = std::format("bank{:02X}", bank);
+            std::cout << "Processing " << currentListing << "..." << std::endl;
+            std::ifstream listingFileIstream{fpSource / "US" / (currentListing + ".lst")};
+            std::ofstream outputOstream{fpDest / (currentListing + ".txt")};
+            TextRenderer renderer{outputOstream};
+            auto listingMatcher = createListingMatcher(map, renderer);
+            listingMatcher->processListing(listingFileIstream);
+        }
     } catch (const malformed_listing & e) {
-        std::cerr << "ERROR: Malformed listing: " << e.what() << std::endl;
+        std::cerr << "ERROR: Malformed listing '" << currentListing << "': " << e.what() << std::endl;
         return 1;
     } catch (const rom_hash_mismatch & e) {
         std::cerr << "ERROR: Invalid ROM hash." << std::endl;

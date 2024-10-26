@@ -12,7 +12,7 @@ static inline bool _shouldOutputIncludedFile(T includedFilename) {
 }
 
 void TextRenderer::changeFile(std::string const & filename){
-    std::cout << ">>> " << filename << std::endl;
+    outputStream << ">>> " << filename << std::endl;
 }
 
 void TextRenderer::consumeLine(std::string const & filename, ListingLine const & line){
@@ -30,7 +30,7 @@ void TextRenderer::consumeLine(std::string const & filename, ListingLine const &
         lastFilenameOutputted = filename;
         changeFile(filename);
     }
-    std::cout << std::format("  {:06X}: {} {} {} {} {} {}",
+    outputStream << std::format("  {:06X}: {} {} {} {} {} {}",
         line.codeAddress(),
         line.codeBytes().size() > 0 ? std::format("{:02X}", line.codeBytes()[0]) : "  ",
         line.codeBytes().size() > 1 ? std::format("{:02X}", line.codeBytes()[1]) : "  ",
