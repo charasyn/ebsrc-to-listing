@@ -23,3 +23,11 @@ public:
     explicit rom_hash_mismatch(const std::string & msg) : parent(msg) {}
     explicit rom_hash_mismatch(const char* msg) : parent(msg) {}
 };
+
+class bad_country : public std::runtime_error {
+    using parent = std::runtime_error;
+public:
+    explicit bad_country(const std::string & msg) : parent(msg) {}
+    explicit bad_country(const char* msg) : parent(msg) {}
+};
+
