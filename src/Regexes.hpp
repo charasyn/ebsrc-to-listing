@@ -19,7 +19,6 @@ namespace Re {
     extern const std::regex forbiddenIncludes;
     extern const std::regex listingLine;
     extern const std::regex currentFileLine;
-    extern const std::regex byteOrRelocation;
     extern const std::regex includeBody;
     extern const std::regex segmentBody;
     extern const std::regex mapFileSegmentHeader;

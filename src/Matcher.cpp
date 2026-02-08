@@ -47,21 +47,21 @@ public:
             }
             // For cases where we have lines without a segment defined beforehand, we will just
             // use an offset of zero.
-            nextLine = ListingLine::fromString(getRom(), curSegment ? curSegment->start : 0U, nextLineStr);
+            nextLine = ListingLine::fromString(curSegment, nextLineStr);
             if (not nextLine.has_value()) {
                 // Unknown line - not an error (the file starts with non-format lines).
                 // Keep going.
                 continue;
             }
-            if (nextLine->bodyText().length() == 0 and nextLine->codeBytes().size() > 0) {
-                // This line is just more bytes for the previous line.
+            if (nextLine->bodyText().length() == 0 and nextLine->hasCodeBytesText()) {
+                // This line is just more bytes for the previous line. We will collect these from
+                // the ROM later; ignore them.
                 if (not lastLine) {
                     throw malformed_listing("Unexpectedly, there are bytes on a line without a "
                                             "previous line to associate them with");
                 } else if (nextLine->includeDepth() != lastLine->includeDepth()) {
                     throw malformed_listing("Bytes continuation line has different include depth");
                 }
-                lastLine->extendBytes(*nextLine);
                 continue;
             }
             {
@@ -85,9 +85,9 @@ public:
             } else if (lineToProcess.includeDepth() > includeStack.size()) {
                 throw malformed_listing("Line's include depth is deeper than includeStack");
             }
-            if (not curSegment and lineToProcess.codeBytes().size() > 0) {
-                throw malformed_listing("Bytes are defined outside of a segment");
-            }
+            // Now that we know the code address of the line which comes after, set the code bytes
+            // for the line being processed.
+            lineToProcess.setCodeBytes(getRom(), lastLine->codeAddress());
             // Output the line if it's in a file we care about writing out.
             renderer_.consumeLine(includeStack.at(lineToProcess.includeDepth() - 1), lineToProcess);
             {

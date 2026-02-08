@@ -21,10 +21,6 @@ const std::regex Re::currentFileLine{
     R"/(Current file: src/(\S+)$)/"
 };
 
-const std::regex Re::byteOrRelocation{
-    R"/((rr)|([0-9A-F][0-9A-F]) )/"
-};
-
 const std::regex Re::includeBody{
     R"/(\s*(\.INCLUDE|LOCALEINCLUDE) "([^"]+)")/"
 };
